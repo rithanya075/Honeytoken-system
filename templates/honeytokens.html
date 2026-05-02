@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Honeytokens{% endblock %}
+{% block page_title %}HONEYTOKEN MANAGEMENT{% endblock %}
+
+{% block content %}
+
+<!-- Add Honeytoken Toggle Button -->
+<div class="toolbar">
+  <button class="btn btn-primary" onclick="toggleAddForm()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    ADD HONEYTOKEN
+  </button>
+</div>
+
+<!-- Inline Add Form (collapsible) -->
+<div class="panel panel--full collapse-panel" id="addTokenForm" style="display:none;">
+  <div class="panel-header">
+    <h2 class="panel-title">NEW HONEYTOKEN</h2>
+    <button class="btn btn-ghost btn-sm" onclick="toggleAddForm()">✕ CLOSE</button>
+  </div>
+  <form method="POST" action="{{ url_for('add_honeytoken') }}" class="add-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">TOKEN NAME *</label>
+        <input type="text" name="token_name" class="form-input"
+               placeholder="e.g. fake_admin_creds.txt" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">TOKEN TYPE *</label>
+        <select name="token_type" class="form-select" required>
+          <option value="">— Select Type —</option>
+          <option value="File">File</option>
+          <option value="Database">Database</option>
+          <option value="API Key">API Key</option>
+          <option value="URL">URL</option>
+          <option value="Credential">Credential</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">RESOURCE ID *</label>
+        <select name="resource_id" class="form-select" required>
+          <option value="">— Select Resource —</option>
+          {% for res in resources %}
+            <option value="{{ res.resource_id }}">{{ res.resource_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">DESCRIPTION</label>
+      <input type="text" name="description" class="form-input"
+             placeholder="What is this honeytoken designed to detect?" />
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        CREATE HONEYTOKEN
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Honeytokens Table -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">ACTIVE HONEYTOKENS ({{ tokens | length }})</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>TOKEN NAME</th>
+          <th>TYPE</th>
+          <th>RESOURCE</th>
+          <th>CREATED BY</th>
+          <th>CREATED AT</th>
+          <th>TRIGGERED</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for token in tokens %}
+        <tr class="data-row {% if token.times_triggered > 0 %}row--honeytoken{% endif %}">
+          <td class="mono">{{ token.token_id }}</td>
+          <td>
+            <span class="token-name">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              {{ token.token_name }}
+            </span>
+          </td>
+          <td><span class="type-tag">{{ token.token_type }}</span></td>
+          <td class="mono">{{ token.resource_name or token.resource_id }}</td>
+          <td>{{ token.created_by or '—' }}</td>
+          <td class="mono muted">{{ token.created_at.strftime('%Y-%m-%d %H:%M') if token.created_at else '—' }}</td>
+          <td>
+            {% if token.times_triggered > 0 %}
+              <span class="badge badge-critical trigger-badge">
+                🚨 {{ token.times_triggered }} BREACH{{ 'ES' if token.times_triggered > 1 else '' }}
+              </span>
+            {% else %}
+              <span class="badge badge-success">✓ 0 — CLEAN</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state">No honeytokens configured yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

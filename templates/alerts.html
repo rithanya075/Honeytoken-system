@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Alerts{% endblock %}
+{% block page_title %}ALERT MONITOR{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<div class="toolbar toolbar--flex">
+  <form method="GET" action="{{ url_for('alerts') }}" class="filter-form">
+    <select name="severity" class="form-select" onchange="this.form.submit()">
+      <option value="">ALL SEVERITIES</option>
+      <option value="CRITICAL" {% if severity == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
+      <option value="HIGH"     {% if severity == 'HIGH'     %}selected{% endif %}>HIGH</option>
+      <option value="MEDIUM"   {% if severity == 'MEDIUM'   %}selected{% endif %}>MEDIUM</option>
+      <option value="LOW"      {% if severity == 'LOW'      %}selected{% endif %}>LOW</option>
+    </select>
+    <input type="date" name="date_from" class="form-input-sm"
+           value="{{ date_from }}" placeholder="From" />
+    <input type="date" name="date_to"   class="form-input-sm"
+           value="{{ date_to }}"   placeholder="To" />
+    <button type="submit" class="btn btn-primary">APPLY</button>
+    <a href="{{ url_for('alerts') }}" class="btn btn-ghost">CLEAR</a>
+  </form>
+</div>
+
+<!-- Alerts Table -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">SECURITY ALERTS ({{ alerts | length }})</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>USER</th>
+          <th>RESOURCE</th>
+          <th>TYPE</th>
+          <th>SEVERITY</th>
+          <th>TIMESTAMP</th>
+          <th>STATUS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in alerts %}
+        <tr class="data-row {% if alert.is_honeytoken %}row--honeytoken{% elif alert.severity == 'HIGH' %}row--high-subtle{% endif %}">
+          <td class="mono">{{ alert.alert_id }}</td>
+          <td>{{ alert.username }}</td>
+          <td class="mono">{{ alert.resource_name or '—' }}</td>
+          <td>
+            {% if alert.is_honeytoken %}
+              <span class="badge badge-critical breach-badge">
+                <span class="blink-dot"></span>
+                HONEYTOKEN BREACH
+              </span>
+            {% else %}
+              <span class="badge badge-medium">ACCESS VIOLATION</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge badge-{{ alert.severity | lower }}">{{ alert.severity }}</span>
+          </td>
+          <td class="mono muted">{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S') if alert.created_at else '—' }}</td>
+          <td>
+            {% if alert.status == 'Open' %}
+              <span class="status-open">
+                <span class="blink-dot blink-dot--red"></span>
+                OPEN
+              </span>
+            {% else %}
+              <span class="badge badge-success">{{ alert.status | upper }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state">No alerts match the current filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Dashboard{% endblock %}
+{% block page_title %}DASHBOARD{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+
+  <div class="stat-card stat-card--cyan">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <div class="stat-value" id="stat-total-users">{{ total_users }}</div>
+    <div class="stat-label">TOTAL USERS</div>
+  </div>
+
+  <div class="stat-card stat-card--red">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="stat-value" id="stat-total-alerts">{{ total_alerts }}</div>
+    <div class="stat-label">TOTAL ALERTS</div>
+  </div>
+
+  <div class="stat-card stat-card--amber">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </div>
+    <div class="stat-value" id="stat-high-risk">{{ high_risk_count }}</div>
+    <div class="stat-label">HIGH RISK USERS</div>
+  </div>
+
+  <div class="stat-card stat-card--green">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <div class="stat-value" id="stat-honeytokens">{{ total_honeytokens }}</div>
+    <div class="stat-label">HONEYTOKENS ACTIVE</div>
+  </div>
+
+</div>
+
+<!-- Mid Row: Recent Alerts + Risk Doughnut -->
+<div class="dashboard-mid">
+
+  <!-- Recent Alerts Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+        </svg>
+        RECENT ALERTS
+      </h2>
+      <a href="{{ url_for('alerts') }}" class="panel-link">View All →</a>
+    </div>
+    <div class="alerts-list" id="recent-alerts-list">
+      {% for alert in recent_alerts %}
+      <div class="alert-item
+        {% if alert.severity == 'CRITICAL' %}alert-item--critical
+        {% elif alert.severity == 'HIGH' %}alert-item--high
+        {% else %}alert-item--medium{% endif %}">
+        <div class="alert-item-left">
+          <span class="badge badge-{{ alert.severity | lower }}">{{ alert.severity }}</span>
+          <span class="alert-user">{{ alert.username }}</span>
+        </div>
+        <div class="alert-item-right">
+          <span class="alert-desc">
+            {{ alert.description[:50] if alert.description else '—' }}{% if alert.description and alert.description|length > 50 %}…{% endif %}
+          </span>
+          <span class="alert-time">
+            {{ alert.created_at.strftime('%H:%M %d/%m') if alert.created_at else '—' }}
+          </span>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-state">No alerts recorded yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Risk Distribution Doughnut -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v4l3 3"/>
+        </svg>
+        RISK DISTRIBUTION
+      </h2>
+    </div>
+    <div class="chart-container chart-container--doughnut">
+      <canvas id="riskDoughnut"></canvas>
+    </div>
+    <div class="doughnut-legend">
+      <span><span class="legend-dot" style="background:#00ff88"></span> Low</span>
+      <span><span class="legend-dot" style="background:#ffaa00"></span> Medium</span>
+      <span><span class="legend-dot" style="background:#ff6600"></span> High</span>
+      <span><span class="legend-dot" style="background:#ff3355"></span> Critical</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Alert Trend Line Chart -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      ALERT TREND — LAST 7 DAYS
+    </h2>
+    <span class="last-updated">
+      Last updated: <span id="last-updated-time">--:--:--</span>
+    </span>
+  </div>
+  <div class="chart-container chart-container--line">
+    <canvas id="alertTrend"></canvas>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<div id="chart-data"
+     data-low="{{ dist.low_count }}"
+     data-med="{{ dist.med_count }}"
+     data-high="{{ dist.high_count }}"
+     data-crit="{{ dist.crit_count }}"
+     data-trend-labels='{{ trend_labels | tojson }}'
+     data-trend-values='{{ trend_values | tojson }}'
+     style="display:none">
+</div>
+<script>
+  var chartData    = document.getElementById("chart-data").dataset;
+  var RISK_DIST    = {
+    low:  parseInt(chartData.low)  || 0,
+    med:  parseInt(chartData.med)  || 0,
+    high: parseInt(chartData.high) || 0,
+    crit: parseInt(chartData.crit) || 0
+  };
+  var TREND_LABELS = JSON.parse(chartData.trendLabels);
+  var TREND_VALUES = JSON.parse(chartData.trendValues);
+
+  document.addEventListener("DOMContentLoaded", function() {
+    initCharts();
+    dashboardAutoRefresh();
+    updateLastUpdated();
+  });
+</script>
+{% endblock %}

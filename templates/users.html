@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Users{% endblock %}
+{% block page_title %}USER MANAGEMENT{% endblock %}
+
+{% block content %}
+
+<!-- Search Bar -->
+<div class="toolbar">
+  <form method="GET" action="{{ url_for('users') }}" class="search-form">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" name="q" class="search-input"
+             placeholder="Search by username or department…"
+             value="{{ search_term }}" oninput="tableSearch('userSearch','userTable')" id="userSearch"/>
+    </div>
+    <button type="submit" class="btn btn-primary">SEARCH</button>
+  </form>
+</div>
+
+<!-- Users Table -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">REGISTERED USERS ({{ users | length }})</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table" id="userTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>USERNAME</th>
+          <th>DEPARTMENT</th>
+          <th>ROLE</th>
+          <th>RISK SCORE</th>
+          <th>STATUS</th>
+          <th>LAST LOGIN</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        {% set score = user.risk_score | int %}
+        {% if score >= 80 %}
+          {% set risk_class = 'row--critical' %}
+          {% set badge_class = 'badge-critical' %}
+          {% set risk_label = 'CRITICAL' %}
+        {% elif score >= 50 %}
+          {% set risk_class = 'row--high' %}
+          {% set badge_class = 'badge-high' %}
+          {% set risk_label = 'HIGH' %}
+        {% elif score >= 20 %}
+          {% set risk_class = 'row--medium' %}
+          {% set badge_class = 'badge-medium' %}
+          {% set risk_label = 'MEDIUM' %}
+        {% else %}
+          {% set risk_class = '' %}
+          {% set badge_class = 'badge-low' %}
+          {% set risk_label = 'LOW' %}
+        {% endif %}
+
+        <tr class="data-row {{ risk_class }}" data-user-id="{{ user.user_id }}"
+            onclick="toggleUserAccordion(this)" style="cursor:pointer">
+          <td class="mono">{{ user.user_id }}</td>
+          <td class="username-cell">
+            <span class="username-text">{{ user.username }}</span>
+          </td>
+          <td>{{ user.department_name or '—' }}</td>
+          <td>{{ user.role_name or '—' }}</td>
+          <td>
+            <div class="risk-cell">
+              <span class="risk-score-num">{{ score }}</span>
+              <div class="risk-bar-wrap">
+                {% set risk_bar_class = 'risk-bar-fill ' + ('risk-bar--critical' if score >= 80 else 'risk-bar--high' if score >= 50 else 'risk-bar--medium' if score >= 20 else 'risk-bar--low') %}
+                style="width: {{ score if score <= 100 else 100 }}%"
+              </div>
+              <span class="badge {{ badge_class }}">{{ risk_label }}</span>
+            </div>
+          </td>
+          <td>
+            {% if user.is_active %}
+              <span class="badge badge-success">ACTIVE</span>
+            {% else %}
+              <span class="badge badge-failed">INACTIVE</span>
+            {% endif %}
+          </td>
+          <td class="mono muted">
+            {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '—' }}
+          </td>
+          <td>
+            <span class="expand-hint">▶ EXPAND</span>
+          </td>
+        </tr>
+
+        <!-- Accordion Row (hidden by default) -->
+        <tr class="accordion-row" id="accordion-{{ user.user_id }}" style="display:none;">
+          <td colspan="8">
+            <div class="accordion-content" id="accordion-content-{{ user.user_id }}">
+              <div class="accordion-loading">Loading recent access logs…</div>
+            </div>
+          </td>
+        </tr>
+
+        {% else %}
+        <tr><td colspan="8" class="empty-state">No users found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

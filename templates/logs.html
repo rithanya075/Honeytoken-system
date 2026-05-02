@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Access Logs{% endblock %}
+{% block page_title %}ACCESS LOGS{% endblock %}
+
+{% block content %}
+
+<!-- Search + Filter Toolbar -->
+<div class="toolbar">
+  <form method="GET" action="{{ url_for('logs') }}" class="search-form">
+    <div class="search-wrapper">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" name="q" class="search-input"
+             placeholder="Filter by username or resource…"
+             value="{{ search_term }}" />
+    </div>
+    <button type="submit" class="btn btn-primary">SEARCH</button>
+    {% if search_term %}<a href="{{ url_for('logs') }}" class="btn btn-ghost">CLEAR</a>{% endif %}
+  </form>
+</div>
+
+<!-- Logs Table -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">ACCESS LOG ENTRIES</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>LOG ID</th>
+          <th>USER</th>
+          <th>RESOURCE</th>
+          <th>ACTION</th>
+          <th>IP ADDRESS</th>
+          <th>TIMESTAMP</th>
+          <th>FLAG</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr class="data-row {% if log.is_suspicious %}row--suspicious{% endif %}">
+          <td class="mono">{{ log.log_id }}</td>
+          <td>{{ log.username }}</td>
+          <td class="mono">{{ log.resource_name or '—' }}</td>
+          <td>
+            <span class="action-tag action-tag--{{ log.action_type | lower }}">{{ log.action_type }}</span>
+          </td>
+          <td class="mono muted">{{ log.ip_address }}</td>
+          <td class="mono muted">{{ log.access_time.strftime('%Y-%m-%d %H:%M:%S') if log.access_time else '—' }}</td>
+          <td>
+            {% if log.is_suspicious %}
+              <span class="suspicious-flag">⚠ SUSPICIOUS</span>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-state">No access logs found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('logs', page=page-1, q=search_term) }}" class="page-btn">← PREV</a>
+    {% endif %}
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+        <span class="page-btn page-btn--active">{{ p }}</span>
+      {% elif p <= 3 or p > total_pages - 3 or (p >= page - 2 and p <= page + 2) %}
+        <a href="{{ url_for('logs', page=p, q=search_term) }}" class="page-btn">{{ p }}</a>
+      {% elif p == 4 or p == total_pages - 3 %}
+        <span class="page-ellipsis">…</span>
+      {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+      <a href="{{ url_for('logs', page=page+1, q=search_term) }}" class="page-btn">NEXT →</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

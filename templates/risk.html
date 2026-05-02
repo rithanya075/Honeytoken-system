@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Risk Monitor{% endblock %}
+{% block page_title %}RISK MONITOR{% endblock %}
+
+{% block content %}
+
+<!-- Summary Cards -->
+<div class="stat-grid stat-grid--3">
+  <div class="stat-card stat-card--cyan">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ avg_risk or 0 }}</div>
+    <div class="stat-label">AVG RISK SCORE</div>
+  </div>
+
+  <div class="stat-card stat-card--amber">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ max_risk_user.username if max_risk_user else '—' }}</div>
+    <div class="stat-label">HIGHEST RISK USER</div>
+    {% if max_risk_user %}
+    <div class="stat-sub">Score: {{ max_risk_user.risk_score }}</div>
+    {% endif %}
+  </div>
+
+  <div class="stat-card stat-card--red">
+    <div class="stat-card-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      </svg>
+    </div>
+    <div class="stat-value">{{ critical_count }}</div>
+    <div class="stat-label">USERS IN CRITICAL ZONE</div>
+  </div>
+</div>
+
+<!-- Bar Chart: Top 10 by Risk -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">TOP 10 USERS BY RISK SCORE</h2>
+  </div>
+  <div class="chart-container chart-container--bar">
+    <canvas id="riskBar"></canvas>
+  </div>
+</div>
+
+<!-- Risk Table -->
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">RISK SCORE BREAKDOWN</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>USER</th>
+          <th>RISK SCORE</th>
+          <th>HONEYTOKEN HITS</th>
+          <th>FAILED LOGINS</th>
+          <th>OFF-HOURS ACCESS</th>
+          <th>LAST UPDATED</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in risk_rows %}
+        {% set score = row.risk_score | int %}
+        <tr class="data-row
+          {% if score >= 80 %}row--critical pulse-border{% elif score >= 50 %}row--high{% elif score >= 20 %}row--medium{% endif %}">
+          <td>{{ row.username }}</td>
+          <td>
+            <div class="risk-cell">
+              <span class="risk-score-num
+                {% if score >= 80 %}text-red{% elif score >= 50 %}text-amber{% elif score >= 20 %}text-yellow{% else %}text-green{% endif %}">
+                {{ score }}
+              </span>
+              <div class="risk-bar-wrap">
+                <div class="risk-bar-fill
+                  {% if score >= 80 %}risk-bar--critical{% elif score >= 50 %}risk-bar--high{% elif score >= 20 %}risk-bar--medium{% else %}risk-bar--low{% endif %}"
+                  style="width:{{ score if score <= 100 else 100 }}%"
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if row.honeytoken_hits > 0 %}
+              <span class="badge badge-critical">{{ row.honeytoken_hits }}</span>
+            {% else %}
+              <span class="muted">0</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.failed_logins > 3 %}
+              <span class="badge badge-high">{{ row.failed_logins }}</span>
+            {% else %}
+              <span class="muted">{{ row.failed_logins }}</span>
+            {% endif %}
+          </td>
+          <td class="muted">{{ row.off_hours_access }}</td>
+          <td class="mono muted">{{ row.last_updated.strftime('%Y-%m-%d %H:%M') if row.last_updated else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-state">No risk data available yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const RISK_CHART_LABELS = {{ chart_labels | tojson }};
+  const RISK_CHART_VALUES = {{ chart_values | tojson }};
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initRiskBar(RISK_CHART_LABELS, RISK_CHART_VALUES);
+  });
+</script>
+{% endblock %}

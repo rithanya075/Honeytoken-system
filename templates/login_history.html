@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Login History{% endblock %}
+{% block page_title %}LOGIN HISTORY{% endblock %}
+
+{% block content %}
+
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">AUTHENTICATION LOG ({{ history | length }} entries)</h2>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>USERNAME</th>
+          <th>IP ADDRESS</th>
+          <th>LOGIN TIME</th>
+          <th>STATUS</th>
+          <th>USER AGENT</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history %}
+        <tr class="data-row {% if entry.status == 'Failed' %}row--suspicious{% endif %}">
+          <td class="mono">{{ entry.history_id }}</td>
+          <td>{{ entry.username }}</td>
+          <td class="mono">
+            {{ entry.ip_address }}
+            {% if entry.ip_address in bf_ip_set %}
+              <span class="badge badge-critical brute-badge">BRUTE FORCE?</span>
+            {% endif %}
+          </td>
+          <td class="mono muted">{{ entry.login_time.strftime('%Y-%m-%d %H:%M:%S') if entry.login_time else '—' }}</td>
+          <td>
+            {% if entry.status == 'Failed' %}
+              <span class="badge badge-failed">
+                <span class="blink-dot blink-dot--red"></span>FAILED
+              </span>
+            {% else %}
+              <span class="badge badge-success">✓ SUCCESS</span>
+            {% endif %}
+          </td>
+          <td class="ua-cell muted">{{ entry.user_agent[:60] if entry.user_agent else '—' }}{% if entry.user_agent and entry.user_agent|length > 60 %}…{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-state">No login history found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

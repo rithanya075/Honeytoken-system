@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}HAMS — Audit Trail{% endblock %}
+{% block page_title %}AUDIT TRAIL{% endblock %}
+
+{% block content %}
+
+<div class="panel panel--full">
+  <div class="panel-header">
+    <h2 class="panel-title">ADMIN ACTIVITY TIMELINE ({{ audit_rows | length }} entries)</h2>
+  </div>
+
+  <div class="timeline">
+    {% for entry in audit_rows %}
+
+    {% if entry.action_type in ['LOGIN', 'LOGOUT'] %}
+      {% set action_color = 'cyan' %}
+    {% elif entry.action_type in ['CREATE', 'INSERT'] %}
+      {% set action_color = 'green' %}
+    {% elif entry.action_type == 'DELETE' %}
+      {% set action_color = 'red' %}
+    {% else %}
+      {% set action_color = 'amber' %}
+    {% endif %}
+
+    <div class="timeline-entry">
+      <!-- Left: Timestamp -->
+      <div class="timeline-time">
+        <span class="timeline-date">{{ entry.created_at.strftime('%d %b %Y') if entry.created_at else '—' }}</span>
+        <span class="timeline-hour">{{ entry.created_at.strftime('%H:%M:%S') if entry.created_at else '' }}</span>
+      </div>
+
+      <!-- Center: Icon + connector line -->
+      <div class="timeline-node">
+        <div class="timeline-dot timeline-dot--{{ action_color }}"></div>
+        <div class="timeline-line"></div>
+      </div>
+
+      <!-- Right: Content card -->
+      <div class="timeline-card">
+        <div class="timeline-card-header">
+          <span class="timeline-action-badge timeline-badge--{{ action_color }}">
+            {{ entry.action_type }}
+          </span>
+          <span class="timeline-target mono">{{ entry.target_entity }}</span>
+        </div>
+        <p class="timeline-details">{{ entry.action_details }}</p>
+        <div class="timeline-meta">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          {{ entry.admin_username }}
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">No audit records found.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
