@@ -1,4 +1,4 @@
-# 🛡️ HAMS — Honeytoken Access Monitoring System
+# HAMS — Honeytoken Access Monitoring System
 
 A **Security Operations Center (SOC) simulation platform** that leverages **database-level deception (honeytokens)** to detect unauthorized access, insider threats, and credential misuse in real time.
 
@@ -12,17 +12,17 @@ HAMS is a full-stack cybersecurity application designed to demonstrate **active 
 
 ##  Key Features
 
-* 🪤 **Honeytoken-based intrusion detection** (decoy credentials & resources)
-* ⚡ **Real-time alert generation using MySQL triggers**
-* 📊 **Dynamic risk scoring engine** based on user behavior
-* 🔍 **Brute-force detection** (failed login tracking & anomaly detection)
-* 📈 **Interactive SOC dashboard** with live metrics (Chart.js)
-* 🕵️ **Comprehensive audit logging** via stored procedures
-* 🔐 **Session-based authentication system**
+Honeytoken-based intrusion detection** (decoy credentials & resources)
+Real-time alert generation using MySQL triggers**
+Dynamic risk scoring engine** based on user behavior
+Brute-force detection** (failed login tracking & anomaly detection)
+Interactive SOC dashboard** with live metrics (Chart.js)
+Comprehensive audit logging** via stored procedures
+Session-based authentication system**
 
 ---
 
-##  Architecture Highlights
+ Architecture Highlights
 
 * Detection logic implemented at the **database layer (MySQL triggers)**
 * Risk score calculation automated using **event-driven updates**
@@ -31,7 +31,7 @@ HAMS is a full-stack cybersecurity application designed to demonstrate **active 
 
 ---
 
-##  Tech Stack
+ Tech Stack
 
 * **Backend:** Python 3.13, Flask
 * **Database:** MySQL 8.0
@@ -40,7 +40,7 @@ HAMS is a full-stack cybersecurity application designed to demonstrate **active 
 
 ---
 
-## Project Structure
+Project Structure
 
 ```
 honeytoken_system/
@@ -54,7 +54,7 @@ honeytoken_system/
 
 ---
 
-##  Setup
+  Setup
 
 ```bash
 pip install flask mysql-connector-python
